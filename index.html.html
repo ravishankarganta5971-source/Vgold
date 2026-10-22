@@ -1,0 +1,142 @@
+<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover"><title>Fieldline v2 · Dispatch & Tracking</title>
+<style>
+:root{--bg:#EBF0EE;--panel:#fff;--p2:#F2F6F4;--ink:#11201B;--muted:#566862;--line:#D2DCD8;--accent:#0B7A6A;--ai:#fff;--active:#17895A;--idle:#A87300;--offline:#76847F;--alert:#C93B26;--job:#2563EB;--done:#64748b;--land:#E1E9E5;--water:#C4DCE5;--road:#fff;--rl:#C8D4CF;--grid:#D3DDD8;color-scheme:light;box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){--bg:#0C1412;--panel:#131E1B;--p2:#182622;--ink:#E5EFEB;--muted:#8DA39C;--line:#243630;--accent:#38C2A5;--ai:#07201B;--active:#3DBE88;--idle:#E0B04A;--offline:#6F817B;--alert:#F06A53;--job:#60A5FA;--done:#475569;--land:#17231F;--water:#11303A;--road:#22332E;--rl:#2C403A;--grid:#1B2A25;color-scheme:dark}}
+:root[data-theme="dark"]{--bg:#0C1412;--panel:#131E1B;--p2:#182622;--ink:#E5EFEB;--muted:#8DA39C;--line:#243630;--accent:#38C2A5;--ai:#07201B;--active:#3DBE88;--idle:#E0B04A;--offline:#6F817B;--alert:#F06A53;--job:#60A5FA;--done:#475569;--land:#17231F;--water:#11303A;--road:#22332E;--rl:#2C403A;--grid:#1B2A25;color-scheme:dark}
+html{scroll-padding-top:env(safe-area-inset-top,0px)}*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--ink);font:14px/1.45 system-ui,-apple-system,"Segoe UI",sans-serif;padding:12px max(14px,env(safe-area-inset-right,0px)) 12px max(14px,env(safe-area-inset-left,0px))}
+button,input,select{font:inherit;color:inherit}:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+.mono{font-family:ui-monospace,Menlo,monospace;font-variant-numeric:tabular-nums}
+.bar{display:flex;flex-wrap:wrap;align-items:center;justify-content:space-between;gap:10px;margin-bottom:12px}
+h1{margin:0;font-size:22px;letter-spacing:.04em;text-transform:uppercase}.sm{color:var(--muted);font-size:12px}
+.row{display:flex;flex-wrap:wrap;gap:8px;align-items:center}
+.chip{padding:4px 11px;border:1px solid var(--line);border-radius:99px;background:var(--panel);font-size:12.5px;color:var(--muted)}
+.seg{display:inline-flex;border:1px solid var(--line);border-radius:8px;background:var(--panel);padding:2px;gap:2px}
+.seg button{border:0;background:none;padding:6px 12px;border-radius:6px;cursor:pointer;color:var(--muted);font-weight:600}
+.seg button[aria-pressed=true]{background:var(--accent);color:var(--ai)}
+.dot{display:inline-block;width:9px;height:9px;border-radius:50%;background:var(--offline)}.dot.active{background:var(--active)}.dot.idle{background:var(--idle)}
+.panel{background:var(--panel);border:1px solid var(--line);border-radius:10px;min-width:0}.pad{padding:14px}
+.grid{display:grid;grid-template-columns:280px minmax(0,1fr) 320px;gap:12px;margin-top:12px}
+.label{font-size:12px;font-weight:600;color:var(--muted);margin:0 0 8px;text-transform:uppercase;letter-spacing:.03em}
+.counts{display:grid;grid-template-columns:repeat(3,1fr);gap:8px}.counts div{background:var(--p2);border-radius:8px;padding:8px 10px}.counts b{display:block;font-size:22px}
+.list{display:flex;flex-direction:column;gap:2px;padding:0 8px 10px}
+.item{display:flex;align-items:center;gap:10px;padding:8px;border-radius:8px;border:1px solid transparent;background:none;text-align:left;cursor:pointer;width:100%}
+.item:hover{background:var(--p2)}.item[aria-current=true]{background:var(--p2);border-color:var(--accent)}.item .g{flex:1;min-width:0}
+.av{width:32px;height:32px;border-radius:50%;background:var(--p2);border:1px solid var(--line);display:grid;place-items:center;font-weight:700;font-size:12px;flex:none}
+.tag{font-size:11px;font-weight:700;padding:2px 7px;border-radius:99px;background:var(--p2);color:var(--muted)}.tag.a{color:var(--idle)}.tag.d{color:var(--active)}
+.feed{border-top:1px solid var(--line);padding:12px 14px;max-height:170px;overflow:auto;font-size:12.5px}.feed div{margin-bottom:6px}
+.mapw{position:relative;overflow:hidden;height:560px}.mapw svg{display:block;width:100%;height:100%}
+.legend{position:absolute;right:10px;top:10px;display:flex;gap:12px;background:var(--panel);border:1px solid var(--line);padding:5px 10px;border-radius:6px;font-size:12px;color:var(--muted)}
+.land{fill:var(--land)}.water{fill:var(--water)}.gl{stroke:var(--grid)}.rl{stroke:var(--rl);fill:none;stroke-linecap:round}.rd{stroke:var(--road);fill:none;stroke-linecap:round}
+.geo{fill:var(--accent);fill-opacity:.1;stroke:var(--accent);stroke-width:1.5;stroke-dasharray:4 3}
+.lbl{font:600 11px system-ui;fill:var(--ink);paint-order:stroke;stroke:var(--panel);stroke-width:3px;text-anchor:middle}
+.mk{cursor:pointer}.mk .core{stroke:var(--panel);stroke-width:2.5;fill:var(--offline)}.mk.active .core{fill:var(--active)}.mk.idle .core{fill:var(--idle)}.mk .halo{fill:none;stroke:var(--accent);stroke-width:2;opacity:0}.mk.sel .halo{opacity:1}
+.jm{cursor:pointer}.jm rect{fill:var(--job);stroke:var(--panel);stroke-width:2}.jm.assigned rect{fill:var(--idle)}.jm.done rect{fill:var(--done)}.jm.sel rect{stroke:var(--accent);stroke-width:3}
+.name{font-size:22px;font-weight:800;margin:0}.kpis{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin:12px 0}.kpi{background:var(--p2);border-radius:8px;padding:10px}.kpi b{display:block;font-size:16px}
+.btn{border:1px solid var(--accent);background:var(--accent);color:var(--ai);border-radius:7px;padding:8px 14px;font-weight:700;cursor:pointer}
+.btn.ghost{background:none;color:var(--ink);border-color:var(--line)}.btn.danger{background:var(--alert);border-color:var(--alert);color:#fff}.btn.full{width:100%;margin-top:8px}
+input,select{width:100%;padding:8px;border:1px solid var(--line);border-radius:7px;background:var(--p2);margin-bottom:8px}
+.state{border:1px solid var(--line);border-radius:10px;padding:12px;background:var(--p2);margin:10px 0}
+.tw{overflow-x:auto}table{border-collapse:collapse;width:100%;min-width:560px}th{font-size:11.5px;color:var(--muted);text-align:left;padding:8px 10px;border-bottom:1px solid var(--line)}td{padding:10px;border-bottom:1px solid var(--line)}
+.num{text-align:right;font-family:ui-monospace,Menlo,monospace}
+.br{display:grid;grid-template-columns:110px 1fr 56px;gap:10px;align-items:center;margin-bottom:9px}.tr{height:10px;background:var(--p2);border-radius:2px;overflow:hidden}.fl{height:100%;background:var(--accent)}
+.two{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+.phone{max-width:440px;margin:0 auto;display:flex;flex-direction:column;gap:12px}
+.sw{display:flex;justify-content:space-between;align-items:center;gap:12px}.sw button{width:44px;height:26px;border-radius:99px;border:1px solid var(--line);background:var(--p2);position:relative;cursor:pointer}
+.sw button::after{content:"";position:absolute;top:2px;left:2px;width:20px;height:20px;border-radius:50%;background:var(--muted);transition:transform .15s}.sw button[aria-checked=true]{background:var(--accent)}.sw button[aria-checked=true]::after{transform:translateX(18px);background:var(--ai)}
+.toast{position:fixed;left:50%;transform:translateX(-50%);bottom:calc(16px + env(safe-area-inset-bottom,0px));background:var(--ink);color:var(--bg);padding:9px 14px;border-radius:8px;z-index:9}
+[hidden]{display:none!important}
+@media(max-width:1060px){.grid{grid-template-columns:minmax(0,1fr)}.mapw{height:380px;order:-1}.two{grid-template-columns:1fr}}
+@media(prefers-reduced-motion:reduce){*{transition:none!important}}
+</style></head><body>
+<header class="bar"><div class="row"><h1>Fieldline v2</h1><span class="sm">Riverside Field Services</span></div>
+<div class="row"><span class="chip" id="trk"></span><span class="chip mono" id="now"></span>
+<div class="seg"><button data-act="role" data-v="mgr" aria-pressed="true">Manager</button><button data-act="role" data-v="emp" aria-pressed="false">Employee</button></div></div></header>
+<section id="mgr"><div class="seg"><button data-act="mt" data-v="live" aria-pressed="true">Live Dispatch</button><button data-act="mt" data-v="att" aria-pressed="false">Attendance</button><button data-act="mt" data-v="rep" aria-pressed="false">Reports</button></div>
+<div class="grid" id="v-live">
+<aside class="panel" style="overflow:hidden"><div class="pad"><h2 class="label">Fleet status</h2><div class="counts"><div><b id="ca">0</b><span class="sm">Active</span></div><div><b id="ci">0</b><span class="sm">Idle</span></div><div><b id="co">0</b><span class="sm">Off</span></div></div></div>
+<div class="list" id="roster"></div><div class="pad" style="padding-top:0"><h2 class="label">Jobs</h2></div><div class="list" id="jobs"></div><div class="feed" id="feed"></div></aside>
+<div class="panel mapw"><svg id="map" viewBox="0 0 800 520" preserveAspectRatio="xMidYMid slice" role="img" aria-label="Live map of staff, jobs and geofences"></svg>
+<div class="legend"><span><i class="dot active"></i> Staff</span><span><i class="dot" style="background:var(--job)"></i> Job</span><span><i class="dot" style="background:var(--done)"></i> Done</span></div></div>
+<aside class="panel pad" id="detail"></aside></div>
+<div class="panel pad" id="v-att" hidden style="margin-top:12px"></div><div class="panel pad" id="v-rep" hidden style="margin-top:12px"></div></section>
+<section id="emp" hidden></section><div class="toast" id="toast" hidden role="status"></div>
+<script>
+(function(){'use strict';
+var $=function(s){return document.querySelector(s)},NS='http://www.w3.org/2000/svg',MPU=8;
+var SITES={A:{n:'Gachibowli Client Site',x:150,y:175,r:180},B:{n:'Hitec City Warehouse',x:340,y:105,r:150},C:{n:'Banjara Hills Office',x:560,y:330,r:140},D:{n:'Secunderabad Depot',x:660,y:130,r:170}};
+var JOBS=[{id:'j1',t:'HVAC Inspection',s:'A',x:160,y:160},{id:'j2',t:'Router Setup',s:'B',x:350,y:110},{id:'j3',t:'Security Audit',s:'C',x:570,y:340},{id:'j4',t:'Cable Routing',s:'D',x:650,y:140}].map(function(j){j.by=null;j.done=false;return j});
+function E(id,n,role,route,st,o){var e={id:id,n:n,role:role,route:route,st:st,leg:1,dwell:0,km:0,base:0,since:null,cin:null,sched:'08:00',consent:true,x:0,y:0,job:null,done:0};for(var k in o)e[k]=o[k];return e}
+var emps=[E('e0','Arjun Rao','Field Technician',['A','B'],'idle',{idle0:1,base:4.4,km:9.8,cin:'08:02'}),E('e1','Meera Iyer','Site Supervisor',['C','B'],'offline',{sched:'12:30'}),E('e2','Kabir Shah','Field Technician',['C','D'],'active',{base:4.5,km:12.4,cin:'08:07'}),E('e3','Divya Nair','Site Supervisor',['B','D'],'active',{base:4.6,km:7.2,cin:'08:01'}),E('e4','Rohan Gupta','Field Technician',['A','C'],'active',{base:4.2,km:15.1,cin:'08:12'}),E('e5','Ayesha Khan','Technician',['D','B'],'offline',{sched:'14:00'})];
+var ME=emps[1],S={role:'mgr',sel:null,job:null,mt:'live'},alerts=[],seq=5;
+emps.forEach(function(e,i){if(e.st==='offline')return;var a=SITES[e.route[0]],b=SITES[e.route[1]],f=[.35,0,.2,.6,.45][i]||.3;e.x=a.x+(b.x-a.x)*f;e.y=a.y+(b.y-a.y)*f;e.since=Date.now()});
+function by(id){return emps.filter(function(e){return e.id===id})[0]}
+function jb(id){return JOBS.filter(function(j){return j.id===id})[0]}
+function on(e){return e.st!=='offline'}
+function p2(n){return(n<10?'0':'')+n}
+function hrs(e){return e.base+(e.since?(Date.now()-e.since)/3600000:0)}
+function hm(h){var m=Math.round(h*60);return Math.floor(m/60)+'h '+p2(m%60)+'m'}
+function ini(n){return n.split(' ').map(function(w){return w[0]}).join('')}
+function esc(s){return String(s).replace(/[&<>"]/g,function(c){return{'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]})}
+function save(){try{localStorage.setItem('fl2',JSON.stringify({jobs:JOBS,seq:seq,e:emps.map(function(e){return{id:e.id,job:e.job,consent:e.consent,done:e.done}}),me:{st:ME.st,cin:ME.cin,base:ME.base,since:ME.since,x:ME.x,y:ME.y}}))}catch(x){}}
+function load(){try{var d=JSON.parse(localStorage.getItem('fl2')||'null');if(!d)return;JOBS=d.jobs;seq=d.seq;d.e.forEach(function(r){var e=by(r.id);e.job=r.job;e.consent=r.consent;e.done=r.done});for(var k in d.me)ME[k]=d.me[k]}catch(x){}}
+function toast(m){var t=$('#toast');t.textContent=m;t.hidden=false;clearTimeout(toast.t);toast.t=setTimeout(function(){t.hidden=true},2800)}
+function alertP(m){alerts.unshift({m:m,t:new Date()});alerts=alerts.slice(0,8);var h='<h2 class="label">Activity</h2>';if(!alerts.length)h+='<span class="sm">Waiting for field updates…</span>';alerts.forEach(function(a){h+='<div>'+esc(a.m)+' <span class="sm mono">'+p2(a.t.getHours())+':'+p2(a.t.getMinutes())+'</span></div>'});$('#feed').innerHTML=h}
+/* map */
+var map=$('#map'),jl,ml;
+function nd(t,a,p){var n=document.createElementNS(NS,t);for(var k in a)n.setAttribute(k,a[k]);if(p)p.appendChild(n);return n}
+function build(){nd('rect',{width:800,height:520,class:'land'},map);for(var i=0;i<=800;i+=50)nd('line',{x1:i,y1:0,x2:i,y2:520,class:'gl'},map);for(i=0;i<=520;i+=50)nd('line',{x1:0,y1:i,x2:800,y2:i,class:'gl'},map);
+nd('path',{d:'M392 262 q34-44 98-32 t72 44 q-12 56-86 60 t-92-24 z',class:'water'},map);
+['M40 92 C190 18 540 14 762 82 S792 428 704 492 S204 512 60 436 S8 170 40 92','M150 175 Q250 90 340 105 T660 130','M340 105 Q470 190 560 330','M150 175 Q330 300 560 330','M660 130 Q650 240 560 330','M560 330 L700 400'].forEach(function(d){nd('path',{d:d,class:'rl','stroke-width':8},map);nd('path',{d:d,class:'rd','stroke-width':5},map)});
+Object.keys(SITES).forEach(function(k){var s=SITES[k];nd('circle',{cx:s.x,cy:s.y,r:s.r/MPU,class:'geo'},map);nd('text',{x:s.x,y:s.y-s.r/MPU-7,class:'lbl'},map).textContent=s.n});
+jl=nd('g',{},map);ml=nd('g',{},map);
+emps.forEach(function(e){var g=nd('g',{class:'mk','data-id':e.id},ml);nd('circle',{r:12,class:'halo'},g);nd('circle',{r:7,class:'core'},g);nd('text',{y:-14,class:'lbl'},g).textContent=e.n.split(' ')[0];e.g=g})}
+function drawMap(){emps.forEach(function(e){var g=e.g;if(!on(e)||!e.consent){g.setAttribute('hidden','');return}g.removeAttribute('hidden');g.setAttribute('transform','translate('+e.x.toFixed(1)+' '+e.y.toFixed(1)+')');g.setAttribute('class','mk '+e.st+(S.sel===e.id?' sel':''))});
+jl.innerHTML='';JOBS.forEach(function(j){var g=nd('g',{class:'jm'+(j.done?' done':j.by?' assigned':'')+(S.job===j.id?' sel':''),'data-job':j.id,transform:'translate('+j.x+' '+j.y+')'},jl);nd('rect',{x:-5,y:-5,width:10,height:10,transform:'rotate(45)'},g);nd('text',{y:18,class:'lbl'},g).textContent=j.t})}
+/* sim */
+function finish(j,silent){j.done=true;var e=by(j.by);if(e){e.job=null;e.done++}if(!silent)alertP(j.t+' completed'+(e?' by '+e.n:''));save()}
+function tick(){emps.forEach(function(e){if(!on(e)||e.idle0)return;
+if(e.dwell>0){e.dwell--;e.st='idle';if(e.dwell===0&&e.job){var j=jb(e.job);if(j&&!j.done)finish(j)}return}
+var j=e.job&&jb(e.job),t=j&&!j.done?j:SITES[e.route[e.leg]];if(j&&j.done){e.job=null}
+var dx=t.x-e.x,dy=t.y-e.y,d=Math.hypot(dx,dy);
+if(d<6){e.dwell=e.job?4:10;e.st='idle';if(!e.job)e.leg=e.leg?0:1;return}
+var s=Math.min(d,3+Math.random()*2);e.x+=dx/d*s;e.y+=dy/d*s;e.km+=s*MPU/1000;e.st='active'});
+drawMap();renderRoster();chip();if(S.role==='mgr'){if(S.sel||S.job)renderDetail();if(S.mt!=='live')renderTab()}else renderEmp()}
+function chip(){$('#trk').textContent=emps.filter(function(e){return on(e)&&e.consent}).length+' of '+emps.length+' tracked';var d=new Date();$('#now').textContent=p2(d.getHours())+':'+p2(d.getMinutes())}
+/* manager */
+function renderRoster(){var c={active:0,idle:0,offline:0},h='';emps.forEach(function(e){c[e.st]++;var j=e.job&&jb(e.job);h+='<button class="item" data-act="sel" data-v="'+e.id+'"'+(S.sel===e.id?' aria-current="true"':'')+'><span class="av">'+ini(e.n)+'</span><span class="g"><b>'+esc(e.n)+'</b>'+(j?'<div class="sm" style="color:var(--job);font-weight:700">'+esc(j.t)+'</div>':'')+'<div class="sm">'+e.role+'</div></span><i class="dot '+e.st+'"></i></button>'});
+$('#roster').innerHTML=h;$('#ca').textContent=c.active;$('#ci').textContent=c.idle;$('#co').textContent=c.offline;
+$('#jobs').innerHTML=JOBS.map(function(j){var st=j.done?'<span class="tag d">Done</span>':j.by?'<span class="tag a">Assigned</span>':'<span class="tag">Open</span>';return'<button class="item" data-act="job" data-v="'+j.id+'"'+(S.job===j.id?' aria-current="true"':'')+'><span class="g"><b>'+esc(j.t)+'</b><div class="sm">'+SITES[j.s].n+'</div></span>'+st+'</button>'}).join('')}
+function renderDetail(){var d=$('#detail'),h;
+if(S.job){var j=jb(S.job);h='<h3 class="name">'+esc(j.t)+'</h3><div class="sm">'+j.id+' · '+SITES[j.s].n+'</div><div class="state"><b>'+(j.done?'Completed':j.by?'Assigned to '+esc(by(j.by).n):'Ready for assignment')+'</b></div>';
+if(!j.done){h+='<h2 class="label">Assign to</h2>'+emps.filter(on).map(function(e){return'<button class="item" data-act="assign" data-v="'+e.id+'"><span class="av">'+ini(e.n)+'</span><span class="g"><b>'+esc(e.n)+'</b><div class="sm">'+e.st+'</div></span>'+(j.by===e.id?'<span class="tag d">Assigned</span>':'')+'</button>'}).join('');if(j.by)h+='<button class="btn danger full" data-act="force" data-v="'+j.id+'">Mark completed</button>'}
+h+='<button class="btn ghost full" data-act="del" data-v="'+j.id+'">Delete job</button>'}
+else if(S.sel){var e=by(S.sel);h='<h3 class="name">'+esc(e.n)+'</h3><div class="sm"><i class="dot '+e.st+'"></i> '+e.role+' · shift '+e.sched+'</div><div class="kpis"><div class="kpi"><b>'+(on(e)?hm(hrs(e)):'—')+'</b><span class="sm">Shift time</span></div><div class="kpi"><b>'+e.km.toFixed(1)+' km</b><span class="sm">Distance</span></div><div class="kpi"><b>'+(e.cin||'—')+'</b><span class="sm">Clocked in</span></div><div class="kpi"><b>'+e.done+'</b><span class="sm">Jobs done</span></div></div><div class="state"><b>Location sharing: '+(e.consent?'On':'Off')+'</b><div class="sm">Marker is hidden from the map when sharing is off.</div></div>'+(e.job?'<div class="state"><b>Task: '+esc(jb(e.job).t)+'</b></div>':'')}
+else{h='<h2 class="label">New job</h2><input id="nj-t" placeholder="Job title" maxlength="40" aria-label="Job title"><select id="nj-s" aria-label="Site">'+Object.keys(SITES).map(function(k){return'<option value="'+k+'">'+SITES[k].n+'</option>'}).join('')+'</select><button class="btn full" data-act="add">Create job</button><p class="sm">Or select a staff member or job marker to manage dispatch.</p>'}
+d.innerHTML=h}
+function renderTab(){if(S.mt==='att'){$('#v-att').innerHTML='<h2 class="label">Today’s attendance</h2><div class="tw"><table><thead><tr><th>Name</th><th>Scheduled</th><th>Clock in</th><th class="num">Hours</th><th>Status</th></tr></thead><tbody>'+emps.map(function(e){var late=false;if(e.cin){var a=e.cin.split(':'),b=e.sched.split(':');late=(+a[0]*60+ +a[1])>(+b[0]*60+ +b[1]+10)}return'<tr><td>'+esc(e.n)+'</td><td class="mono">'+e.sched+'</td><td class="mono">'+(e.cin||'—')+'</td><td class="num">'+(on(e)?hm(hrs(e)):'—')+'</td><td>'+(!e.cin&&!on(e)?'Not started':late?'<span style="color:var(--idle)">Late</span>':'<span style="color:var(--active)">On time</span>')+'</td></tr>'}).join('')+'</tbody></table></div>'}
+else if(S.mt==='rep'){var mk=Math.max.apply(null,emps.map(function(e){return e.km}))||1,csv='name,role,km,hours,jobs_done\n'+emps.map(function(e){return[e.n,e.role,e.km.toFixed(1),hrs(e).toFixed(2),e.done].join(',')}).join('\n');
+var op=JOBS.filter(function(j){return!j.done&&!j.by}).length,as=JOBS.filter(function(j){return!j.done&&j.by}).length,dn=JOBS.filter(function(j){return j.done}).length;
+$('#v-rep').innerHTML='<div class="two"><div><h2 class="label">Distance by staff</h2>'+emps.map(function(e){return'<div class="br"><span>'+esc(e.n.split(' ')[0])+'</span><div class="tr"><div class="fl" style="width:'+(e.km/mk*100)+'%"></div></div><span class="num">'+e.km.toFixed(1)+'</span></div>'}).join('')+'</div><div><h2 class="label">Jobs</h2><div class="kpis"><div class="kpi"><b>'+op+'</b><span class="sm">Open</span></div><div class="kpi"><b>'+as+'</b><span class="sm">Assigned</span></div><div class="kpi"><b>'+dn+'</b><span class="sm">Completed</span></div></div><h2 class="label">CSV (copy to export)</h2><textarea readonly style="width:100%;min-height:130px;background:var(--p2);border:1px solid var(--line);border-radius:8px;padding:8px;color:var(--ink)" class="mono">'+csv+'</textarea></div></div>'}}
+/* employee */
+function renderEmp(){var e=ME,o=on(e),j=e.job&&jb(e.job);$('#emp').innerHTML='<div class="phone"><div class="panel pad row"><span class="av">'+ini(e.n)+'</span><div><h3 class="name">'+esc(e.n)+'</h3><div class="sm"><i class="dot '+e.st+'"></i> '+(o?'On shift · '+hm(hrs(e)):'Off shift · next '+e.sched)+'</div></div></div>'+
+'<div class="panel pad"><h2 class="label">'+(o?'Current task':'Next shift')+'</h2>'+(j?'<div class="state"><b>'+esc(j.t)+'</b><div class="sm">'+SITES[j.s].n+'</div><button class="btn full" data-act="mydone">Mark job completed</button></div>':'<div class="sm">No active job assigned. Wait for dispatch.</div>')+'<button class="btn'+(o?' danger':'')+' full" data-act="'+(o?'cout':'cin')+'" style="padding:12px">'+(o?'Clock out':'Clock in')+'</button></div>'+
+'<div class="panel pad sw"><div><b>Location sharing</b><div class="sm">Only visible during your shift</div></div><button role="switch" aria-label="Location sharing" aria-checked="'+e.consent+'" data-act="cons"></button></div></div>'}
+/* actions */
+document.addEventListener('click',function(ev){var t=ev.target.closest('[data-act],.mk,.jm');if(!t)return;var a=t.dataset.act,v=t.dataset.v;
+if(t.classList.contains('mk'))a='sel',v=t.dataset.id;else if(t.classList.contains('jm'))a='job',v=t.dataset.job;
+if(a==='role'){S.role=v;document.querySelectorAll('[data-act=role]').forEach(function(b){b.setAttribute('aria-pressed',String(b.dataset.v===v))});$('#mgr').hidden=v!=='mgr';$('#emp').hidden=v!=='emp';if(v==='emp')renderEmp()}
+else if(a==='mt'){S.mt=v;document.querySelectorAll('[data-act=mt]').forEach(function(b){b.setAttribute('aria-pressed',String(b.dataset.v===v))});$('#v-live').hidden=v!=='live';$('#v-att').hidden=v!=='att';$('#v-rep').hidden=v!=='rep';renderTab()}
+else if(a==='sel'){S.sel=v;S.job=null;renderDetail();renderRoster();drawMap()}
+else if(a==='job'){S.job=v;S.sel=null;renderDetail();renderRoster();drawMap()}
+else if(a==='assign'){var j=jb(S.job),e=by(v);if(j.by&&by(j.by))by(j.by).job=null;if(e.job&&jb(e.job)&&e.job!==j.id)jb(e.job).by=null;j.by=v;e.job=j.id;alertP(j.t+' assigned to '+e.n);save();renderDetail();renderRoster();drawMap()}
+else if(a==='force'){finish(jb(v));renderDetail();renderRoster();drawMap()}
+else if(a==='del'){var d=jb(v);if(d.by)by(d.by).job=null;JOBS=JOBS.filter(function(x){return x.id!==v});S.job=null;save();renderDetail();renderRoster();drawMap()}
+else if(a==='add'){var ti=$('#nj-t').value.trim(),sk=$('#nj-s').value;if(!ti){toast('Enter a job title');return}var s=SITES[sk];JOBS.push({id:'j'+(++seq),t:ti,s:sk,x:s.x+(Math.random()*40-20),y:s.y+(Math.random()*40-20),by:null,done:false});alertP('New job: '+ti);save();renderDetail();renderRoster();drawMap()}
+else if(a==='cin'){ME.st='active';ME.since=Date.now();var n=new Date();ME.cin=p2(n.getHours())+':'+p2(n.getMinutes());ME.x=SITES.C.x;ME.y=SITES.C.y;ME.leg=1;alertP(ME.n+' clocked in');save();renderEmp();drawMap();renderRoster()}
+else if(a==='cout'){ME.base=hrs(ME);ME.st='offline';ME.since=null;alertP(ME.n+' clocked out');save();renderEmp();drawMap();renderRoster()}
+else if(a==='cons'){ME.consent=!ME.consent;save();renderEmp();chip();drawMap()}
+else if(a==='mydone'){var mj=jb(ME.job);if(mj)finish(mj);renderEmp();drawMap();renderRoster()}});
+load();build();renderRoster();renderDetail();alertP('Dispatch console ready');drawMap();chip();setInterval(tick,1500);
+})();
+</script></body></html>
